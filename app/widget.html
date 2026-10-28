@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RM PMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://live.zwidgets.com/js-sdk/1.2/ZohoEmbededAppSDK.min.js"></script>
+<style>
+:root{
+  --bg:#fafafa; --surface:#fff; --surface-muted:#f5f5f5; --border:#e5e5e5; --border-strong:#d4d4d4;
+  --text:#171717; --sub:#525252; --brand:#0a0777; --brand-soft:#e0e7ff; --accent:#fb6e44;
+  --ok:#15803d; --ok-bg:#f0fdf4; --bad:#b91c1c; --bad-bg:#fef2f2; --warn:#a16207; --warn-bg:#fefce8; --rev:#7c2d12; --rev-bg:#ffedd5;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Poppins",system-ui,sans-serif;color:var(--text);background:var(--bg);font-size:14px}
+button,select,input{font-family:inherit;font-size:14px}
+a{color:var(--brand)} a:hover{color:#4338ca}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+header{background:var(--brand);color:#fff;padding:0 32px;position:sticky;top:0;z-index:5}
+.bar{max-width:1376px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:24px;min-height:64px}
+.brand{display:flex;align-items:center;gap:12px;font-size:20px}
+.brand .tag{font-size:12px;padding:2px 8px;border:1px solid rgba(255,255,255,.4);border-radius:999px}
+.tabs{display:flex;flex-wrap:wrap;gap:4px}
+.tabs button{background:transparent;border:0;color:#e0e7ff;padding:10px 14px;border-radius:8px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:rgba(255,255,255,.14);color:#fff;font-weight:600}
+.hright{margin-left:auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.hright input[type=search]{width:300px;height:40px;border-radius:8px;border:0;padding:0 14px}
+.hright label.t{display:flex;gap:6px;align-items:center;font-size:13px;color:#e0e7ff}
+main{max-width:1376px;margin:0 auto;padding:28px 32px 48px;display:flex;flex-direction:column;gap:24px}
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px}
+h1{margin:0;font-size:30px;font-weight:600;color:var(--brand)}
+h2{margin:0 0 4px;font-size:18px;font-weight:600}
+.sub{margin:4px 0 16px;font-size:13px;color:var(--sub)}
+.top .sub{margin:6px 0 0;font-size:14px}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px}
+.kpi .l{margin:0;font-size:13px;color:var(--sub)} .kpi .v{margin:6px 0 0;font-size:30px;font-weight:600;color:var(--brand)} .kpi .n{margin:4px 0 0;font-size:12px;color:var(--sub)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:24px;align-items:start}
+.three{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:24px;align-items:start}
+ul.todo{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+ul.todo li{display:flex;gap:12px;align-items:center;padding:12px;border-radius:8px;background:var(--surface-muted)}
+ul.todo li.l0{background:var(--bad-bg)} ul.todo li.l1{background:var(--warn-bg)}
+ul.todo li .t{flex:1}
+.pill{font-size:12px;font-weight:600;border-radius:999px;padding:3px 10px;white-space:nowrap}
+.p-urgent{background:var(--bad);color:#fff}.p-week{background:#fde047;color:#713f12}.p-fin{background:var(--border);color:var(--text)}
+.p-ok{background:var(--ok);color:#fff}.p-bad{background:var(--bad);color:#fff}.p-rev{background:var(--rev-bg);color:var(--rev)}.p-plan{background:var(--brand-soft);color:var(--brand)}
+.linkbtn{background:none;border:0;color:var(--brand);font-weight:600;cursor:pointer;text-decoration:underline;padding:4px}
+.btn{height:44px;padding:0 16px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;text-decoration:none}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.navy{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tblwrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:12px;font-weight:500;color:var(--sub);padding:8px}
+td{padding:10px 8px;border-top:1px solid var(--border);vertical-align:top}
+td.r,th.r{text-align:right;white-space:nowrap}
+.yes{color:var(--ok);font-weight:600}.no{color:var(--bad);font-weight:600}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.col{background:var(--surface-muted);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.col h3{margin:0;font-size:13px;font-weight:600}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:left;cursor:pointer;width:100%}
+.card b{display:block;font-size:14px}.card span{display:block;margin-top:2px;font-size:12px;color:var(--sub)}
+.card span.bad{color:var(--bad)}.card span.warn{color:var(--warn)}
+.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px;font-size:12px}
+.steps li{padding:10px;border-radius:8px;background:var(--surface-muted);color:var(--sub)}
+.steps li.done{background:var(--brand-soft);color:var(--brand)}.steps li.cur{background:var(--brand);color:#fff;font-weight:600}
+.checks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.checks li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 12px;border-radius:8px;background:var(--surface-muted)}
+.checks li.on{background:var(--ok-bg)}
+.checks label{display:flex;gap:10px;align-items:center;cursor:pointer;flex:1}
+.checks input{width:18px;height:18px;accent-color:var(--ok)}
+.checks .st{font-weight:600;font-size:13px}
+.money{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.money div{padding:12px;border-radius:8px;background:var(--surface-muted)}
+.money .l{margin:0;font-size:12px;color:var(--sub)}.money .v{margin:4px 0 0;font-size:22px;font-weight:600}
+.box{margin-top:12px;padding:12px;border-radius:8px;border:1px solid var(--border)}
+.links{list-style:none;margin:0 0 16px;padding:0;display:flex;flex-direction:column;gap:8px}
+.minor{font-size:12px;color:var(--sub)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--sub)}
+.chips span.c{padding:3px 10px;border:1px solid var(--border);border-radius:999px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:10px 16px;border-radius:8px;display:none;z-index:9}
+.err{background:var(--bad-bg);color:var(--bad);padding:12px;border-radius:8px;display:none}
+.empty{color:var(--sub);margin:0}
+.sel{height:44px;border-radius:8px;border:1px solid var(--border-strong);padding:0 10px;background:#fff}
+.vh{position:absolute;left:-9999px}
+@media (max-width:640px){header,main{padding-left:16px;padding-right:16px}.hright input[type=search]{width:100%}.two,.three{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="brand">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fb6e44" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path><path d="M10 21v-6h4v6"></path></svg>
+      <span>Rental Management</span><span class="tag">PMS</span>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button role="tab" aria-selected="true" data-view="overview">Overview</button>
+      <button role="tab" aria-selected="false" data-view="tenancies">Tenancies</button>
+      <button role="tab" aria-selected="false" data-view="finance">Finance</button>
+    </nav>
+    <div class="hright">
+      <label class="t"><input type="checkbox" id="showTest" checked> Show test records</label>
+      <label for="q" class="vh">Search tenancy, booking or landlord</label>
+      <input id="q" type="search" placeholder="Search tenancy, booking or landlord">
+    </div>
+  </div>
+</header>
+<main>
+  <div class="err" id="err" role="alert"></div>
+  <div id="view" style="display:flex;flex-direction:column;gap:24px"><p class="empty">Loading data from Zoho CRM…</p></div>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ===== Config ===== */
+const ORG = "org34644249";
+const TEN_TAB = "CustomModule90";
+const FEE_TAB = "CustomModule91";
+const CASE_TAB = "CustomModule80";
+const SYNC_FUNCTION = "rm_sync_payments_now";
+const AUTO_REFRESH_MIN = 5;
+const STAGES = ["Confirmed","Contract sent","Contract signed","Ready for move-in","Active","Ending","Moved out","Closed","Cancelled"];
+const GATE_STAGES = ["Ready for move-in","Active"];
+const FINANCE_TYPES = ["Monthly","Monthly (months 1 + 2)","Extension first half"];
+const TEN_FIELDS = "Name, Stage, Source, Contract_Type, Landlord, Landlord.Account_Name, Booking, Booking_Reference, Tenant_Profile, Tenant_Profile.Name, Move_in_Date, Planned_Move_out_Date, Actual_Move_out_Date, Monthly_Rent, Deposit, Contract_Signed, Deposit_Received, First_Rent_Paid, Inventory_Reviewed, Condition_Document_Signed, Deposit_Settled, Rent_Collected, Rent_Pending, Unpaid_Installments, Arrears_Alert, Paid_to_Landlord, Next_Payout_Date, Fees_Planned, Fees_Applied, Fees_Invoiced, Payments_Last_Sync, Tenancy_Folder_Link, Upfront_Fee, Monthly_Fee, Rentable_Unit_ID, Listing_ID, Landlord_Platform_ID";
+const FEE_FIELDS = "Name, Tenancy, Tenancy.Name, Landlord, Landlord.Account_Name, Service_Month, Fee_Type, Base_Amount, Fee_Amount, VAT, Total, Status, Check_Result, Deducted_Amount, Payin_Amount, Payout_Amount, Sent_to_Finance_On, Invoice_Number";
+
+/* ===== State ===== */
+let S = { view:"overview", tenancies:[], fees:[], detail:null, inst:[], landlordFolder:null, deal:null, acc:null, tasks:[], cases:[], loadedAt:null };
+
+/* ===== Helpers ===== */
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const eur = v => (v === null || v === undefined || v === "") ? "—" : new Intl.NumberFormat("es-ES",{style:"currency",currency:"EUR"}).format(Number(v));
+const d = v => v ? new Date(v + (String(v).length === 10 ? "T00:00:00" : "")) : null;
+const fmt = v => { const x = d(v); return x ? x.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : "—"; };
+const today = () => { const t = new Date(); t.setHours(0,0,0,0); return t; };
+const days = v => { const x = d(v); return x ? Math.round((x - today()) / 86400000) : null; };
+const iso = x => x.getFullYear() + "-" + String(x.getMonth()+1).padStart(2,"0") + "-" + String(x.getDate()).padStart(2,"0");
+const monthStart = (offset) => { const t = today(); return new Date(t.getFullYear(), t.getMonth() + offset, 1); };
+const nameOf = l => l ? (l.name || "") : "";
+const gateOk = t => t.Contract_Signed === true && t.Deposit_Received === true && t.First_Rent_Paid === true;
+const isTest = t => /test/i.test(nameOf(t.Landlord));
+const recUrl = (tab,id) => "https://crm.zoho.com/crm/" + ORG + "/tab/" + tab + "/" + id;
+function toast(msg){ const el=$("#toast"); el.textContent=msg; el.style.display="block"; clearTimeout(toast.t); toast.t=setTimeout(()=>el.style.display="none",3500); }
+function showErr(msg){ const el=$("#err"); el.textContent=msg; el.style.display = msg ? "block" : "none"; }
+
+async function coql(query){
+  const r = await ZOHO.CRM.API.coql({ select_query: query });
+  if (r && r.data) return r;
+  return { data: [], info: { more_records: false } };
+}
+async function coqlAll(base){
+  let out = [], offset = 0;
+  for (let i = 0; i < 10; i++) {
+    const r = await coql(base + " limit " + offset + ", 200");
+    out = out.concat(r.data);
+    if (!r.info || !r.info.more_records) break;
+    offset += 200;
+  }
+  return out;
+}
+async function update(entity, data){
+  const r = await ZOHO.CRM.API.updateRecord({ Entity: entity, APIData: data, Trigger: [] });
+  const ok = r && r.data && r.data[0] && r.data[0].code === "SUCCESS";
+  if (!ok) throw new Error((r && r.data && r.data[0] && r.data[0].message) || "Zoho did not save the change");
+  return r;
+}
+
+/* ===== Load ===== */
+async function load(){
+  if (!window.__preview) showErr("");
+  try {
+    const [ten, fees] = await Promise.all([
+      coqlAll("select " + TEN_FIELDS + " from RM_Tenancies where id is not null order by Move_in_Date asc"),
+      coqlAll("select " + FEE_FIELDS + " from RM_Fee_Lines where id is not null order by Service_Month asc")
+    ]);
+    // COQL returns lookups as {id} only: copy the names selected with dot notation into them
+    for (const t of ten) {
+      if (t.Landlord) t.Landlord.name = t["Landlord.Account_Name"] || "";
+      if (t.Tenant_Profile) t.Tenant_Profile.name = t["Tenant_Profile.Name"] || "";
+    }
+    for (const f of fees) {
+      if (f.Tenancy) f.Tenancy.name = f["Tenancy.Name"] || "";
+      if (f.Landlord) f.Landlord.name = f["Landlord.Account_Name"] || "";
+    }
+    S.tenancies = ten; S.fees = fees; S.loadedAt = new Date();
+    if (S.detail) { const fresh = ten.find(x => x.id === S.detail.id); if (fresh) { S.detail = fresh; } }
+    render();
+  } catch(e) {
+    showErr("Could not read Zoho CRM: " + (e.message || e) + ". Check you have access to RM Tenancies and RM Fee Lines.");
+  }
+}
+
+function visibleTenancies(){
+  const q = $("#q").value.trim().toLowerCase();
+  const showTest = $("#showTest").checked;
+  return S.tenancies.filter(t => (showTest || !isTest(t)) && (!q || [t.Name, t.Booking_Reference, nameOf(t.Landlord), nameOf(t.Tenant_Profile)].join(" ").toLowerCase().includes(q)));
+}
+function visibleFees(){
+  const ids = new Set(visibleTenancies().map(t => t.id));
+  return S.fees.filter(f => f.Tenancy && ids.has(f.Tenancy.id));
+}
+
+/* ===== Today rules ===== */
+function todayItems(){
+  const items = [];
+  for (const t of visibleTenancies()) {
+    const toIn = days(t.Move_in_Date), toOut = days(t.Planned_Move_out_Date), sinceOut = days(t.Actual_Move_out_Date);
+    if (["Confirmed","Contract sent","Contract signed","Ready for move-in"].includes(t.Stage) && toIn !== null && toIn <= 7 && !gateOk(t)) {
+      const miss = [!t.Contract_Signed && "contract", !t.Deposit_Received && "deposit", !t.First_Rent_Paid && "first rent"].filter(Boolean).join(", ");
+      items.push({ lvl:0, t, text:"Move-in in " + toIn + " day(s): " + miss + " missing" });
+    }
+    if (t.Arrears_Alert) items.push({ lvl:0, t, text:"Unpaid rent " + eur(t.Rent_Pending) + ": start recovery, check the guarantee" });
+    if (t.Stage === "Active" && !t.Inventory_Reviewed && toIn !== null && toIn <= 0 && toIn >= -3) items.push({ lvl:1, t, text:"Inventory review window closing" });
+    if (["Active","Ending"].includes(t.Stage) && toOut !== null && toOut >= 0 && toOut <= 60) items.push({ lvl:1, t, text:"Extension decision: " + toOut + " days to move-out" });
+    if (t.Stage === "Moved out" && !t.Deposit_Settled) items.push({ lvl: (sinceOut !== null && sinceOut <= -20) ? 0 : 1, t, text:"Deposit to settle (return within 1 month)" });
+  }
+  for (const f of visibleFees()) {
+    if (f.Check_Result === "Review" && f.Status !== "Cancelled") items.push({ lvl:2, fee:f, text: f.Name + ": deduction does not match the fee (" + fmt(f.Service_Month) + ")" });
+  }
+  return items.sort((a,b) => a.lvl - b.lvl);
+}
+
+/* ===== Views ===== */
+function render(){
+  document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === S.view && !S.detail)));
+  if (S.detail) return renderDetail();
+  if (S.view === "overview") return renderOverview();
+  if (S.view === "tenancies") return renderTenancies();
+  if (S.view === "finance") return renderFinance();
+}
+
+function topBar(title, subtitle){
+  return `<div class="top"><div><h1>${title}</h1><p class="sub">${subtitle}</p></div>
+  <div class="actions"><button class="btn" type="button" data-act="refresh">Refresh</button><button class="btn primary" type="button" data-act="sync">Sync payments now</button></div></div>`;
+}
+function syncLine(){
+  const lastSync = S.tenancies.map(t => t.Payments_Last_Sync).filter(Boolean).sort().pop();
+  const time = x => x.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+  return "Last payments sync " + (lastSync ? esc(new Date(lastSync).toLocaleString("en-GB",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})) : "—") + " · page updated " + (S.loadedAt ? time(S.loadedAt) : "—") + ", refreshes every " + AUTO_REFRESH_MIN + " min";
+}
+function greeting(){ const h = new Date().getHours(); return h < 13 ? "Good morning" : (h < 20 ? "Good afternoon" : "Good evening"); }
+
+function renderOverview(){
+  const ten = visibleTenancies(), fees = visibleFees();
+  const active = ten.filter(t => ["Active","Ending"].includes(t.Stage)).length;
+  const moveIns = ten.filter(t => { const x = days(t.Move_in_Date); return x !== null && x >= 0 && x <= 14 && !["Cancelled","Closed"].includes(t.Stage); });
+  const blocked = moveIns.filter(t => !gateOk(t)).length;
+  const arrears = ten.filter(t => t.Arrears_Alert);
+  const arrearsSum = arrears.reduce((s,t) => s + Number(t.Rent_Pending || 0), 0);
+  const thisM = iso(monthStart(0));
+  const feesThis = fees.filter(f => f.Service_Month === thisM && f.Status !== "Cancelled");
+  const planned = feesThis.reduce((s,f) => s + Number(f.Fee_Amount||0), 0);
+  const applied = feesThis.filter(f => ["Applied in Retool","Sent to Finance","Invoiced"].includes(f.Status)).reduce((s,f) => s + Number(f.Fee_Amount||0), 0);
+  const review = fees.filter(f => f.Check_Result === "Review" && f.Status !== "Cancelled").length;
+  const items = todayItems();
+  const pill = ["p-urgent","p-week","p-fin"], pillTxt = ["Urgent","This week","Finance"];
+  const monthName = new Date().toLocaleDateString("en-GB",{month:"long"});
+
+  $("#view").innerHTML = `
+  ${topBar(greeting(), syncLine())}
+  <section class="kpis" aria-label="Key figures">
+    <div class="kpi"><p class="l">Active tenancies</p><p class="v">${active}</p><p class="n">${ten.length} in total</p></div>
+    <div class="kpi"><p class="l">Move-ins next 14 days</p><p class="v">${moveIns.length}</p><p class="n" style="color:${blocked ? "var(--warn)" : "var(--sub)"}">${blocked} not ready for keys</p></div>
+    <div class="kpi"><p class="l">Rent in arrears</p><p class="v" style="color:${arrears.length ? "var(--bad)" : "var(--brand)"}">${eur(arrearsSum)}</p><p class="n">${arrears.length} tenancy(ies)</p></div>
+    <div class="kpi"><p class="l">Fees ${esc(monthName)}</p><p class="v">${eur(planned)}</p><p class="n">${eur(applied)} applied · ${eur(planned - applied)} planned</p></div>
+    <div class="kpi"><p class="l">Fees to review</p><p class="v" style="color:${review ? "#c2410c" : "var(--brand)"}">${review}</p><p class="n">deduction missing or different</p></div>
+  </section>
+  <div class="two">
+    <section class="panel" aria-labelledby="h-today"><h2 id="h-today">Today</h2><p class="sub">What needs someone, by deadline</p>
+      ${items.length ? `<ul class="todo">${items.slice(0,12).map(i => `<li class="l${i.lvl}"><span class="pill ${pill[i.lvl]}">${pillTxt[i.lvl]}</span><span class="t"><b>${esc(i.t ? i.t.Name : (i.fee.Tenancy ? i.fee.Tenancy.name : ""))}</b> · ${esc(i.text)}</span><button class="linkbtn" type="button" data-open="${esc(i.t ? i.t.id : (i.fee.Tenancy ? i.fee.Tenancy.id : ""))}">${i.lvl === 2 ? "Review" : "Open"}</button></li>`).join("")}</ul>${items.length > 12 ? `<p class="minor" style="margin:10px 0 0">+ ${items.length - 12} more</p>` : ""}` : `<p class="empty">Nothing pending today.</p>`}
+    </section>
+    <section class="panel" aria-labelledby="h-keys"><h2 id="h-keys">Move-ins · key gate</h2><p class="sub">No keys until contract, deposit and first rent are confirmed</p>
+      ${moveIns.length ? `<div class="tblwrap"><table><thead><tr><th>Tenancy</th><th>Move-in</th><th>Contract</th><th>Deposit</th><th>1st rent</th><th>Keys</th></tr></thead><tbody>${moveIns.map(t => `<tr><td><button class="linkbtn" type="button" data-open="${t.id}" style="padding:0">${esc(t.Name)}</button><br><span class="minor">${esc(nameOf(t.Landlord))}</span></td><td>${fmt(t.Move_in_Date)}</td><td class="${t.Contract_Signed ? "yes" : "no"}">${t.Contract_Signed ? "Signed" : "Missing"}</td><td class="${t.Deposit_Received ? "yes" : "no"}">${t.Deposit_Received ? "Received" : "Missing"}</td><td class="${t.First_Rent_Paid ? "yes" : "no"}">${t.First_Rent_Paid ? "Paid" : "Missing"}</td><td><span class="pill ${gateOk(t) ? "p-ok" : "p-bad"}">${gateOk(t) ? "Ready" : "Blocked"}</span></td></tr>`).join("")}</tbody></table></div>` : `<p class="empty">No move-ins in the next 14 days.</p>`}
+    </section>
+  </div>
+  <section class="panel" aria-labelledby="h-pipe"><h2 id="h-pipe">Tenancies by stage</h2><p class="sub">From RM Tenancies · open a card to see and update it (the key-gate rule still applies)</p>${pipeline(ten)}</section>
+  ${financeSection(true)}
+  <footer class="chips"><span>Data from:</span><span class="c">Zoho CRM · RM Tenancies</span><span class="c">Installments (Rent Collection)</span><span class="c">RM Fee Lines</span><span class="c">Booking Requests</span><span class="c">Case Management</span></footer>`;
+  bindAll();
+}
+
+function pipeline(ten){
+  return `<div class="cols">${STAGES.filter(s => s !== "Cancelled").map(s => {
+    const list = ten.filter(t => t.Stage === s);
+    return `<div class="col"><h3>${esc(s)} · ${list.length}</h3>${list.map(t => {
+      let note = eur(t.Monthly_Rent) + " · to " + fmt(t.Planned_Move_out_Date), cls = "";
+      if (t.Arrears_Alert) { note = "Rent unpaid"; cls = "bad"; }
+      else if (["Contract signed","Ready for move-in"].includes(t.Stage) && !gateOk(t)) { note = "Key gate incomplete"; cls = "bad"; }
+      else if (t.Stage === "Ending") { const x = days(t.Planned_Move_out_Date); note = "Extension? " + (x !== null ? x + " days" : ""); cls = "warn"; }
+      else if (t.Stage === "Moved out" && !t.Deposit_Settled) { note = "Deposit to settle"; }
+      return `<button type="button" class="card" data-open="${t.id}"><b>${esc(t.Name)}</b><span>${esc(nameOf(t.Landlord))}</span><span class="${cls}">${esc(note)}</span></button>`;
+    }).join("")}</div>`;
+  }).join("")}</div>`;
+}
+
+function renderTenancies(){
+  const ten = visibleTenancies();
+  $("#view").innerHTML = `${topBar("Tenancies", ten.length + " tenancy(ies) · " + syncLine())}
+  <section class="panel"><div class="tblwrap"><table><thead><tr><th>Tenancy</th><th>Landlord</th><th>Booking</th><th>Stage</th><th>Move-in</th><th>Move-out</th><th class="r">Rent</th><th>Keys</th><th class="r">Pending</th><th class="r">Fees planned</th></tr></thead><tbody>
+  ${ten.map(t => `<tr><td><button class="linkbtn" type="button" data-open="${t.id}" style="padding:0">${esc(t.Name)}</button></td><td>${esc(nameOf(t.Landlord))}</td><td>${esc(t.Booking_Reference || "—")}</td><td>${esc(t.Stage)}</td><td>${fmt(t.Move_in_Date)}</td><td>${fmt(t.Planned_Move_out_Date)}</td><td class="r">${eur(t.Monthly_Rent)}</td><td><span class="pill ${gateOk(t) ? "p-ok" : "p-bad"}">${gateOk(t) ? "Ready" : "Blocked"}</span></td><td class="r" style="color:${t.Arrears_Alert ? "var(--bad)" : "inherit"}">${eur(t.Rent_Pending)}</td><td class="r">${eur(t.Fees_Planned)}</td></tr>`).join("") || `<tr><td colspan="10" class="empty">No tenancies match.</td></tr>`}
+  </tbody></table></div></section>`;
+  bindAll();
+}
+
+function financeLines(){
+  const next = iso(monthStart(1));
+  return visibleFees().filter(f => f.Service_Month === next && f.Status === "Planned" && FINANCE_TYPES.includes(f.Fee_Type));
+}
+function financeSection(compact){
+  const lines = financeLines();
+  const label = monthStart(1).toLocaleDateString("en-GB",{month:"long",year:"numeric"});
+  const tot = lines.reduce((s,f)=>s+Number(f.Fee_Amount||0),0), totV = lines.reduce((s,f)=>s+Number(f.Total||0),0);
+  return `<section class="panel" aria-labelledby="h-fin">
+    <div class="top" style="margin-bottom:16px"><div><h2 id="h-fin">${esc(label)} fees for Finance</h2><p class="sub" style="margin:0">${lines.length} line(s) · ${eur(tot)} without VAT · ${eur(totV)} with VAT · columns as in the Manual Invoicing sheet · list sent on the 25th</p></div>
+    <div class="actions"><button class="btn" type="button" data-act="copy" ${lines.length ? "" : "disabled"}>Copy rows for the sheet</button><button class="btn navy" type="button" data-act="sent" ${lines.length ? "" : "disabled"}>Mark as sent to Finance</button></div></div>
+    <div class="tblwrap"><table style="min-width:800px"><thead><tr><th>Booking</th><th>Landlord</th><th>Type</th><th class="r">Without VAT</th><th class="r">With VAT</th><th>Retool</th><th>Sent</th><th>Invoice</th></tr></thead><tbody>
+    ${lines.map(f => { const t = S.tenancies.find(x => f.Tenancy && x.id === f.Tenancy.id) || {}; return `<tr><td>${esc(t.Booking_Reference || "—")}</td><td>${esc(nameOf(f.Landlord))}</td><td>${esc(f.Fee_Type)}</td><td class="r">${eur(f.Fee_Amount)}</td><td class="r">${eur(f.Total)}</td><td class="minor">${f.Fee_Type === "Extension first half" ? "Manual" : "Pending"}</td><td>${f.Sent_to_Finance_On ? fmt(f.Sent_to_Finance_On) : "—"}</td><td>${esc(f.Invoice_Number || "—")}</td></tr>`; }).join("") || `<tr><td colspan="8" class="empty">Nothing to invoice for ${esc(label)} yet.</td></tr>`}
+    </tbody></table></div>
+  </section>`;
+}
+function renderFinance(){
+  const review = visibleFees().filter(f => f.Check_Result === "Review" && f.Status !== "Cancelled");
+  $("#view").innerHTML = `${topBar("Finance", "Monthly fees to invoice and deductions to check · " + syncLine())}
+  ${financeSection(false)}
+  <section class="panel" aria-labelledby="h-rev"><h2 id="h-rev">Deductions to review</h2><p class="sub">Paid payouts where the deduction does not match the fee (with or without VAT)</p>
+    <div class="tblwrap"><table style="min-width:800px"><thead><tr><th>Line</th><th>Tenancy</th><th>Landlord</th><th>Month</th><th class="r">Tenant paid</th><th class="r">Landlord received</th><th class="r">Deducted</th><th class="r">Fee</th></tr></thead><tbody>
+    ${review.map(f => `<tr><td><a href="${recUrl(FEE_TAB,f.id)}" target="_blank" rel="noopener">${esc(f.Name)}</a></td><td>${f.Tenancy ? `<button class="linkbtn" type="button" data-open="${f.Tenancy.id}" style="padding:0">${esc(f.Tenancy.name)}</button>` : "—"}</td><td>${esc(nameOf(f.Landlord))}</td><td>${fmt(f.Service_Month)}</td><td class="r">${eur(f.Payin_Amount)}</td><td class="r">${eur(f.Payout_Amount)}</td><td class="r">${eur(f.Deducted_Amount)}</td><td class="r">${eur(f.Fee_Amount)}</td></tr>`).join("") || `<tr><td colspan="8" class="empty">All deductions match.</td></tr>`}
+    </tbody></table></div></section>`;
+  bindAll();
+}
+
+async function copyRows(){
+  const lines = financeLines();
+  const month = monthStart(1).toLocaleDateString("en-GB",{month:"long"});
+  const accIds = [...new Set(lines.map(f => f.Landlord && f.Landlord.id).filter(Boolean))];
+  const vat = {};
+  for (const id of accIds) { try { const r = await ZOHO.CRM.API.getRecord({Entity:"Accounts",RecordID:id}); vat[id] = (r.data && r.data[0] && r.data[0].CIF) || ""; } catch(e) { vat[id] = ""; } }
+  const rows = lines.map(f => { const t = S.tenancies.find(x => f.Tenancy && x.id === f.Tenancy.id) || {};
+    return [t.Booking_Reference||"", t.Listing_ID||"", t.Rentable_Unit_ID||"", t.Landlord_Platform_ID||"", "", vat[f.Landlord && f.Landlord.id]||"", Number(f.Fee_Amount||0).toFixed(2), Number(f.Total||0).toFixed(2), month, "", "", f.Name].join("\t"); });
+  const text = rows.join("\n");
+  try { await navigator.clipboard.writeText(text); toast("Copied " + rows.length + " row(s). Paste them into the Manual Invoicing sheet."); }
+  catch(e) { const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); toast("Copied " + rows.length + " row(s)."); }
+}
+async function markSent(){
+  const lines = financeLines().filter(f => !f.Sent_to_Finance_On);
+  if (!lines.length) return toast("All lines were already marked as sent.");
+  try { for (const f of lines) { await update("RM_Fee_Lines", { id: f.id, Sent_to_Finance_On: iso(today()) }); f.Sent_to_Finance_On = iso(today()); }
+    toast("Marked " + lines.length + " line(s) as sent to Finance."); render(); }
+  catch(e) { showErr("Could not mark the lines: " + e.message); }
+}
+
+/* ===== Detail ===== */
+async function openDetail(id){
+  const t = S.tenancies.find(x => x.id === id);
+  if (!t) return;
+  const same = S.detail && S.detail.id === id;
+  S.detail = t;
+  if (!same) { S.inst = []; S.landlordFolder = null; S.deal = null; S.acc = null; S.tasks = []; S.cases = []; render(); }
+  try {
+    const jobs = [];
+    if (t.Booking) {
+      jobs.push(coqlAll("select Installment_Type, Installment_Status, Expected_Amount, Paid_Amount, Period_From, Failure_Motive, Payment_Method from Installments where Booking = '" + t.Booking.id + "' order by Period_From asc").then(r => S.inst = r));
+      jobs.push(ZOHO.CRM.API.getRecord({Entity:"Deals",RecordID:t.Booking.id}).then(r => S.deal = r.data && r.data[0] ? r.data[0] : null));
+      jobs.push(coql("select Name, Category, Stage, Severity, Created_Time from Case_Management where Booking = '" + t.Booking.id + "' order by Created_Time desc limit 20").then(r => S.cases = r.data));
+    }
+    if (t.Landlord) {
+      jobs.push(ZOHO.CRM.API.getRecord({Entity:"Accounts",RecordID:t.Landlord.id}).then(r => { S.acc = r.data && r.data[0] ? r.data[0] : null; S.landlordFolder = S.acc ? S.acc.RM_Folder_Link : null; }));
+    }
+    jobs.push(coql("select Subject, Status, Due_Date, Priority from Tasks where What_Id = '" + t.id + "' and Status != 'Completed' order by Due_Date asc limit 20").then(r => S.tasks = r.data).catch(() => S.tasks = []));
+    await Promise.all(jobs.map(j => j.catch(e => console.warn(e))));
+  } catch(e) { showErr("Could not read the tenancy details: " + (e.message || e)); }
+  if (S.detail && S.detail.id === id) render();
+}
+
+function renderDetail(){
+  const t = S.detail, idx = STAGES.indexOf(t.Stage), dl = S.deal || {}, ac = S.acc || {};
+  const fees = S.fees.filter(f => f.Tenancy && f.Tenancy.id === t.id);
+  const months = {};
+  for (const i of S.inst) { const k = String(i.Period_From||"").slice(0,7); if (!k) continue; months[k] = months[k] || {}; months[k][i.Installment_Type] = i; }
+  for (const f of fees) { const k = String(f.Service_Month||"").slice(0,7); if (!k) continue; months[k] = months[k] || {}; months[k].fee = f; }
+  const keys = Object.keys(months).sort();
+  const checks = [["Contract_Signed","Contract signed",true,"Signed"],["Deposit_Received","Deposit in the landlord's account",true,"Received"],["First_Rent_Paid","First rent paid",true,"Paid"],["Inventory_Reviewed","Inventory reviewed (24 h)",false,"Done"],["Condition_Document_Signed","Condition document at move-out",false,"Done"],["Deposit_Settled","Deposit settled",false,"Done"]];
+  const folder = t.Tenancy_Folder_Link || S.landlordFolder;
+  $("#view").innerHTML = `
+  <p style="margin:0"><button class="linkbtn" type="button" id="back" style="padding:0">Back to ${esc(S.view === "overview" ? "overview" : S.view)}</button></p>
+  <section class="panel" aria-label="Tenancy summary" style="display:flex;flex-direction:column;gap:20px;padding:24px">
+    <div class="top">
+      <div>
+        <p class="minor" style="margin:0">${esc(t.Name)} · booking ${esc(t.Booking_Reference || "—")} · ${esc((t.Contract_Type || "—").toLowerCase())} · ${esc((t.Source || "—").toLowerCase())}${dl.Plan_Type ? " · plan " + esc(dl.Plan_Type) : ""}</p>
+        <h1 style="margin-top:6px;font-size:28px">${esc(dl.Address || nameOf(t.Landlord) || t.Name)}</h1>
+        <p class="sub" style="margin:6px 0 0">Landlord <b>${esc(nameOf(t.Landlord) || "—")}</b> · tenant <b>${esc(nameOf(t.Tenant_Profile) || "—")}</b> · ${fmt(t.Move_in_Date)} → ${fmt(t.Planned_Move_out_Date)} · ${eur(t.Monthly_Rent)} / month</p>
+      </div>
+      <div class="actions">
+        ${folder ? `<a class="btn" href="${esc(folder)}" target="_blank" rel="noopener">Open folder</a>` : ""}
+        ${dl.Listing_URL ? `<a class="btn" href="${esc(dl.Listing_URL)}" target="_blank" rel="noopener">See listing</a>` : ""}
+        <a class="btn" href="${recUrl(TEN_TAB,t.id)}" target="_blank" rel="noopener">Open in CRM</a>
+        <label for="stageSel" class="vh">Stage</label>
+        <select id="stageSel" class="sel">${STAGES.map(s => `<option ${s===t.Stage?"selected":""}>${esc(s)}</option>`).join("")}</select>
+      </div>
+    </div>
+    <ol class="steps" aria-label="Stage">${STAGES.filter(s=>s!=="Cancelled").map((s,k) => `<li class="${s===t.Stage?"cur":(k<idx?"done":"")}" ${s===t.Stage?'aria-current="step"':""}>${esc(s)}</li>`).join("")}</ol>
+  </section>
+
+  <div class="three">
+    <section class="panel" aria-labelledby="h-chk"><h2 id="h-chk">Checks</h2><p class="sub">Key gate first; the rest by stage</p>
+      <ul class="checks">${checks.map(([k,l,g,doneTxt]) => `<li class="${t[k]?"on":""}"><label><input type="checkbox" data-chk="${k}" ${t[k]?"checked":""}> ${esc(l)}</label>${g ? '<span class="pill p-plan">Key gate</span>' : ""}<span class="st" style="color:${t[k] ? "var(--ok)" : "var(--sub)"}">${t[k] ? doneTxt : "Not yet"}</span></li>`).join("")}</ul>
+      <p class="sub" style="margin:12px 0 0">Keys: <span class="pill ${gateOk(t)?"p-ok":"p-bad"}">${gateOk(t)?"Ready":"Blocked"}</span>${dl.Vetting_Status ? ` · vetting ${esc(dl.Vetting_Status)}` : ""}</p>
+    </section>
+
+    <section class="panel" aria-labelledby="h-mon"><h2 id="h-mon">Money</h2><p class="sub">From Installments and RM Fee Lines · synced ${t.Payments_Last_Sync ? esc(new Date(t.Payments_Last_Sync).toLocaleString("en-GB",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})) : "—"}</p>
+      <div class="money">
+        <div><p class="l">Rent collected</p><p class="v">${eur(t.Rent_Collected)}</p></div>
+        <div><p class="l">Paid to landlord</p><p class="v">${eur(t.Paid_to_Landlord)}</p></div>
+        <div><p class="l">Rent pending</p><p class="v" style="color:${t.Arrears_Alert?"var(--bad)":"inherit"}">${eur(t.Rent_Pending)}</p></div>
+        <div><p class="l">Next payout</p><p class="v">${fmt(t.Next_Payout_Date)}</p></div>
+      </div>
+      <div class="box"><p class="minor" style="margin:0">Fee · ${esc(t.Upfront_Fee ?? 6)}% first half + ${esc(t.Monthly_Fee ?? 6)}% monthly</p>
+        <p style="margin:6px 0 0">Monthly planned <b>${eur(t.Fees_Planned)}</b> · applied <b>${eur(t.Fees_Applied)}</b> · invoiced <b>${eur(t.Fees_Invoiced)}</b></p></div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-side"><h2 id="h-side">People, tasks &amp; complaints</h2><p class="sub">From the booking, the landlord record, Tasks and Case Management</p>
+      <ul class="links">
+        <li><b>Tenant</b> · ${esc(nameOf(t.Tenant_Profile) || "—")}${dl.Tenant_Phone ? ` · <a href="tel:${esc(dl.Tenant_Phone)}">${esc(dl.Tenant_Phone)}</a>` : ""}${dl.Email ? ` · <a href="mailto:${esc(dl.Email)}">${esc(dl.Email)}</a>` : ""}${dl.Tenant_Country || dl.Tenant_Language ? `<br><span class="minor">${esc([dl.Tenant_Country, dl.Tenant_Language].filter(Boolean).join(" · "))}</span>` : ""}</li>
+        <li><b>Landlord</b> · ${esc(nameOf(t.Landlord) || "—")}${ac.Phone ? ` · <a href="tel:${esc(ac.Phone)}">${esc(ac.Phone)}</a>` : ""}${ac.Email ? ` · <a href="mailto:${esc(ac.Email)}">${esc(ac.Email)}</a>` : ""}${ac.Language || ac.CIF ? `<br><span class="minor">${esc([ac.Language, ac.CIF && ("VAT " + ac.CIF)].filter(Boolean).join(" · "))}</span>` : ""}</li>
+        ${S.deal ? `<li class="minor">Check-in confirmed: ${esc(dl.After_Check_In || "—")} · pre check-out call: ${esc(dl.Pre_Check_Out || "—")} · deposit protection: ${esc(dl.Deposit_protection_status || "—")}</li>` : ""}
+      </ul>
+      <p style="margin:0 0 8px;font-size:13px;font-weight:600">Open tasks</p>
+      ${S.tasks.length ? `<ul class="checks" style="margin-bottom:14px">${S.tasks.map(k => `<li><span>${esc(k.Subject)}<br><span class="minor">due ${fmt(k.Due_Date)}</span></span><span class="pill ${["High","Highest"].includes(k.Priority) ? "p-urgent" : "p-fin"}">${esc(k.Priority || "Task")}</span></li>`).join("")}</ul>` : `<p class="empty" style="margin-bottom:14px">No open tasks.</p>`}
+      <p style="margin:0 0 8px;font-size:13px;font-weight:600">Complaints (Case Management)</p>
+      ${S.cases.length ? `<ul class="checks">${S.cases.map(c => `<li><span><a href="${recUrl(CASE_TAB,c.id)}" target="_blank" rel="noopener">${esc(c.Name || "Case")}</a><br><span class="minor">${esc([c.Category, c.Stage].filter(Boolean).join(" · "))} · ${fmt(String(c.Created_Time || "").slice(0,10))}</span></span><span class="pill p-rev">${esc(c.Severity || "Case")}</span></li>`).join("")}</ul>` : `<p class="empty">No complaints for this booking.</p>`}
+    </section>
+  </div>
+
+  <section class="panel" aria-labelledby="h-mm"><h2 id="h-mm">Month by month</h2><p class="sub">Rent paid by the tenant, payout to the landlord and our fee in one row · Review = the deduction does not match the fee</p>
+    <div class="tblwrap"><table style="min-width:960px"><thead><tr><th>Month</th><th class="r">Tenant paid</th><th class="r">Landlord received</th><th class="r">Deducted</th><th>Fee type</th><th class="r">Fee</th><th>Check</th><th>Invoice</th></tr></thead><tbody>
+    ${keys.map(k => { const m = months[k], pi = m.payin, po = m.payout, f = m.fee;
+      const paid = pi && ["paid","overpaid"].includes(pi.Installment_Status) ? pi.Paid_Amount : null;
+      const recv = po && ["paid","overpaid"].includes(po.Installment_Status) ? po.Paid_Amount : null;
+      const ded = (paid !== null && recv !== null) ? Number(paid) - Number(recv) : null;
+      const chk = f ? (f.Check_Result === "Matches fee" ? '<span class="pill p-ok">Applied</span>' : f.Check_Result === "Review" ? '<span class="pill p-rev">Review</span>' : '<span class="pill p-plan">Pending</span>') : '<span class="minor">—</span>';
+      const lbl = new Date(k + "-01T00:00:00").toLocaleDateString("en-GB",{month:"short",year:"numeric"});
+      const unpaid = pi && pi.Installment_Status === "unpaid";
+      const tip = pi && pi.Failure_Motive ? "Failure: " + pi.Failure_Motive : (pi && pi.Payment_Method ? "Paid by " + pi.Payment_Method : "");
+      return `<tr><td>${esc(lbl)}</td><td class="r" style="color:${unpaid?"var(--bad)":"inherit"}" title="${esc(tip)}">${unpaid ? "Unpaid " + eur(pi.Expected_Amount) + (pi.Failure_Motive ? `<br><span class="minor">${esc(pi.Failure_Motive)}</span>` : "") : (paid !== null ? eur(paid) : (pi ? "Due " + eur(pi.Expected_Amount) : "—"))}</td><td class="r">${recv !== null ? eur(recv) : (po ? "Due " + eur(po.Expected_Amount) : "—")}</td><td class="r">${ded !== null ? eur(ded) : "—"}</td><td>${f ? esc(f.Fee_Type) : '<span class="minor">—</span>'}</td><td class="r">${f ? eur(f.Fee_Amount) : "—"}</td><td>${chk}</td><td>${f && f.Invoice_Number ? esc(f.Invoice_Number) : '<span class="minor">—</span>'}</td></tr>`; }).join("") || `<tr><td colspan="8" class="empty">${t.Booking ? "Loading payments…" : "Link a booking to see payments."}</td></tr>`}
+    </tbody></table></div>
+  </section>`;
+  $("#back").onclick = () => { S.detail = null; render(); };
+  $("#stageSel").onchange = e => changeStage(t, e.target.value, e.target);
+  document.querySelectorAll("[data-chk]").forEach(cb => cb.onchange = () => toggleCheck(t, cb.dataset.chk, cb.checked, cb));
+}
+
+async function toggleCheck(t, field, val, el){
+  const data = { id: t.id }; data[field] = val;
+  if (field === "Contract_Signed") data.Contract_Signed_Date = val ? iso(today()) : null;
+  if (field === "Deposit_Received") data.Deposit_Received_Date = val ? iso(today()) : null;
+  if (field === "Deposit_Settled") data.Deposit_Settled_Date = val ? iso(today()) : null;
+  if (!val && ["Contract_Signed","Deposit_Received","First_Rent_Paid"].includes(field) && GATE_STAGES.includes(t.Stage)) {
+    if (!confirm("This tenancy is already '" + t.Stage + "'. Unticking a key-gate check means the keys should not have been handed over. Continue?")) { el.checked = true; return; }
+  }
+  try { await update("RM_Tenancies", data); Object.assign(t, data); toast("Saved."); render(); }
+  catch(e) { el.checked = !val; showErr("Could not save: " + e.message); }
+}
+async function changeStage(t, stage, el){
+  if (GATE_STAGES.includes(stage) && !gateOk(t)) {
+    el.value = t.Stage;
+    const miss = [!t.Contract_Signed && "contract signed", !t.Deposit_Received && "deposit received", !t.First_Rent_Paid && "first rent paid"].filter(Boolean).join(", ");
+    showErr("Keys cannot be handed over yet. Missing: " + miss + ".");
+    return;
+  }
+  try { await update("RM_Tenancies", { id: t.id, Stage: stage }); t.Stage = stage; showErr(""); toast("Stage changed to " + stage + "."); render(); }
+  catch(e) { el.value = t.Stage; showErr("Could not change the stage: " + e.message); }
+}
+
+function bindAll(){
+  document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => openDetail(b.dataset.open));
+  document.querySelectorAll("[data-act]").forEach(b => b.onclick = () => ({ refresh: load, sync: syncNow, copy: copyRows, sent: markSent })[b.dataset.act]());
+}
+
+/* ===== Sync now and auto refresh ===== */
+async function syncNow(){
+  const b = document.querySelector('[data-act="sync"]'); if (b) { b.disabled = true; b.textContent = "Syncing…"; }
+  try {
+    const r = await ZOHO.CRM.FUNCTIONS.execute(SYNC_FUNCTION, { arguments: JSON.stringify({}) });
+    const out = r && r.details && (r.details.output || r.details.userMessage);
+    toast(out ? String(out) : "Payments synced.");
+    await load();
+    if (S.detail) await openDetail(S.detail.id);
+  } catch(e) {
+    showErr("Could not run the payments sync. Check the standalone function " + SYNC_FUNCTION + " exists. " + (e.message || ""));
+  }
+  const b2 = document.querySelector('[data-act="sync"]'); if (b2) { b2.disabled = false; b2.textContent = "Sync payments now"; }
+}
+setInterval(() => { if (!document.hidden) load(); }, AUTO_REFRESH_MIN * 60000);
+
+/* ===== Init ===== */
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => { S.view = b.dataset.view; S.detail = null; render(); });
+$("#q").oninput = () => { if (!S.detail) render(); };
+$("#showTest").onchange = () => render();
+
+/* Outside Zoho CRM (local preview): run on sample data instead of failing */
+if (typeof ZOHO === "undefined") {
+  window.__preview = true;
+  const T = [{ id:"demo1", Name:"RMT-5", Stage:"Active", Source:"Spotahome tenant", Contract_Type:"Temporary housing", Landlord:{id:"L1"}, "Landlord.Account_Name":"TEST 2 – Rental Management", Booking:{id:"B1"}, Booking_Reference:"Y474LE7-3Z", Move_in_Date:"2025-10-15", Planned_Move_out_Date:"2026-10-09", Monthly_Rent:1880, Contract_Signed:true, Deposit_Received:true, First_Rent_Paid:true, Rent_Collected:20412, Rent_Pending:0, Paid_to_Landlord:20412, Fees_Planned:1286.58, Fees_Applied:0, Fees_Invoiced:0, Upfront_Fee:6, Monthly_Fee:6, Payments_Last_Sync:new Date().toISOString() }];
+  const months = ["2025-11","2025-12","2026-01","2026-02","2026-03","2026-04","2026-05","2026-06","2026-07","2026-08","2026-09","2026-10"];
+  const F = months.map((m,i) => ({ id:"f"+i, Name:"RMF-"+(31-i), Tenancy:{id:"demo1"}, "Tenancy.Name":"RMT-5", Landlord:{id:"L1"}, "Landlord.Account_Name":"TEST 2 – Rental Management", Service_Month:m+"-01", Fee_Type:i===0?"Monthly (months 1 + 2)":"Monthly", Fee_Amount:i===0?125.82:(i===11?32.76:112.8), Total:i===0?152.24:(i===11?39.64:136.49), Status:"Planned", Check_Result:"Review", Deducted_Amount:0, Payin_Amount:i===0?1066:(i===11?546:1880), Payout_Amount:i===0?1066:(i===11?546:1880) }));
+  const I = months.flatMap((m,i) => { const a = i===0?1066:(i===11?546:1880); return [{Installment_Type:"payin",Installment_Status:"paid",Expected_Amount:a,Paid_Amount:a,Period_From:m+"-01"},{Installment_Type:"payout",Installment_Status:"paid",Expected_Amount:a,Paid_Amount:a,Period_From:m+"-01"}]; });
+  window.ZOHO = { CRM: {
+    API: {
+      coql: async o => { const q = o.select_query; return { data: q.includes("from RM_Tenancies") ? T : q.includes("from RM_Fee_Lines") ? F : q.includes("from Installments") ? I : [], info:{ more_records:false } }; },
+      getRecord: async o => ({ data: [ o.Entity === "Deals" ? { Address:"[ADDRESS] · Madrid", Plan_Type:"Select", Vetting_Status:"Accepted" } : { Phone:"[PHONE]", Email:"[EMAIL]", CIF:"[VAT]" } ] }),
+      updateRecord: async () => ({ data: [{ code:"SUCCESS" }] })
+    },
+    FUNCTIONS: { execute: async () => ({ details: { output: "Preview: sync runs only inside Zoho CRM" } }) }
+  } };
+  showErr("Preview with sample data. Open the RM PMS tab in Zoho CRM to see and change live data.");
+  load();
+} else {
+  ZOHO.embeddedApp.on("PageLoad", () => load());
+  ZOHO.embeddedApp.init();
+}
+</script>
+</body>
+</html>

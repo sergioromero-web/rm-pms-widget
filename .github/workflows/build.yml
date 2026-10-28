@@ -1,0 +1,38 @@
+name: Build Zoho widget
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Zoho Extension Toolkit
+        run: npm install -g zoho-extension-toolkit
+
+      - name: Validate widget
+        run: zet validate
+
+      - name: Pack widget
+        run: zet pack
+
+      - name: Upload zip as build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rm-pms-widget
+          path: dist/*.zip
+
+      - name: Attach zip to the release (tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip

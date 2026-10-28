@@ -1,0 +1,14 @@
+{
+  "locale": ["en"],
+  "service": "CRM",
+  "storage": false,
+  "widgets": [
+    {
+      "name": "RM PMS",
+      "location": "web_tab",
+      "url": "/app/widget.html"
+    }
+  ],
+  "config": [],
+  "usedConnections": []
+}
