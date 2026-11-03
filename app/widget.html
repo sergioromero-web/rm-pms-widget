@@ -329,6 +329,8 @@ ul.todo li,ul.todo li.l0,ul.todo li.l1{box-shadow:none !important;padding:14px 0
 .dqp{padding:18px 24px}
 .dqsum{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.dqsum h2{margin:0}.dqn{display:flex;gap:6px;flex-wrap:wrap}
 .gdot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-left:8px;vertical-align:2px}.gdot.g1{background:var(--alert)}.gdot.g2{background:var(--amber)}.gdot.g3{background:#c9c9d6}
+.filters{flex-wrap:wrap;overflow:visible;row-gap:2px}.fchip{padding:8px 9px}
+.mine{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--sub);cursor:pointer}.mine input{accent-color:var(--brand)}
 @media (max-width:640px){header,main{padding-left:16px;padding-right:16px}.hright input[type=search]{width:100%}.two,.three{grid-template-columns:1fr}}
 </style>
 </head>
@@ -642,10 +644,10 @@ function renderOverview(){
   </section>
 
   <div class="two">
-    <section class="panel" aria-labelledby="h-today"><h2 id="h-today">Today</h2><p class="sub">What needs someone, by deadline</p>
+    <section class="panel" aria-labelledby="h-today"><div class="top" style="align-items:flex-start"><div><h2 id="h-today">Today</h2><p class="sub">What needs someone, by deadline</p></div>${S.me ? `<label class="mine"><input type="checkbox" data-mine ${S.filt.scope === "mine" ? "checked" : ""}> Only mine</label>` : ""}</div>
       <div class="filters" role="group" aria-label="Filter">
-        ${["all","keys","payments","stay","extensions","deposits","data","finance"].map(c => `<button type="button" class="fchip" data-ftype="${c}" aria-pressed="${S.filt.type === c}">${c === "all" ? "All" : CAT[c]}${c === "all" ? ` · ${all.length}` : (counts[c] ? ` · ${counts[c]}` : "")}</button>`).join("")}
-        ${S.me ? `<span class="fsep"></span><button type="button" class="fchip" data-fscope="mine" aria-pressed="${S.filt.scope === "mine"}">Mine</button>` : ""}
+        ${["all","keys","payments","stay","extensions","deposits","data","finance"].filter(c => c === "all" || counts[c] || S.filt.type === c).map(c => `<button type="button" class="fchip" data-ftype="${c}" aria-pressed="${S.filt.type === c}">${c === "all" ? "All" : CAT[c]}${c === "all" ? ` · ${all.length}` : (counts[c] ? ` · ${counts[c]}` : "")}</button>`).join("")}
+
       </div>
       ${items.length ? `<ul class="todo">${items.slice(0,12).map(i => { const dl = dueLabel(i.due), lvl = i.due === null ? 2 : (i.due <= 2 ? 0 : (i.due <= 7 ? 1 : 2)); const body = `<b>${esc(i.t ? i.t.Name : "Finance")}</b> · ${esc(i.text)}`; return `<li class="l${lvl}"><span class="pill p-fin cat">${esc(CAT[i.cat])}</span>${i.sub ? `<details><summary>${body}</summary><ul class="sublist">${i.sub.map(x => `<li>${esc(x)}</li>`).join("")}</ul></details>` : `<span class="t">${body}</span>`}<span class="due ${dl.cls}">${esc(dl.txt)}</span>${i.t ? `<button class="linkbtn" type="button" data-open="${i.t.id}">Open</button>` : `<button class="linkbtn" type="button" data-go="finance">Open</button>`}</li>`; }).join("")}</ul>${items.length > 12 ? `<p class="minor" style="margin:10px 0 0">+ ${items.length - 12} more</p>` : ""}` : `<p class="empty">Nothing pending${S.filt.type !== "all" || S.filt.scope !== "all" ? " for this filter" : " today"}.</p>`}
     </section>
@@ -1236,6 +1238,7 @@ function bindAll(){
   document.querySelectorAll("[data-filter]").forEach(b => b.onclick = () => { S.filt.type = b.dataset.filter; render(); const h = document.getElementById("h-today"); if (h) h.scrollIntoView({behavior:"smooth"}); });
   document.querySelectorAll("[data-ftype]").forEach(b => b.onclick = () => { S.filt.type = b.dataset.ftype; render(); });
   document.querySelectorAll("[data-dq]").forEach(b => b.onclick = () => { S.dqOpen = !S.dqOpen; render(); });
+  document.querySelectorAll("[data-mine]").forEach(c => c.onchange = () => { S.filt.scope = c.checked ? "mine" : "all"; render(); });
   document.querySelectorAll("[data-fscope]").forEach(b => b.onclick = () => { S.filt.scope = S.filt.scope === "mine" ? "all" : "mine"; render(); });
   document.querySelectorAll("[data-gen]").forEach(b => b.onclick = () => { const [lid, m] = b.dataset.gen.split("|"); generateStatement(lid, m, b); });
   document.querySelectorAll("[data-landlord]").forEach(b => b.onclick = () => { $("#q").value = b.dataset.landlord; S.view = "tenancies"; render(); });
