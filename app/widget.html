@@ -437,7 +437,7 @@ async function load(){
       coqlAll("select " + TEN_FIELDS + " from RM_Tenancies where id is not null order by Move_in_Date asc"),
       coqlAll("select " + FEE_FIELDS + " from RM_Fee_Lines where id is not null order by Service_Month asc")
     ]);
-    try { S.props = await coqlAll("select Name, Listing_ID, Rentable_Unit_IDs, Landlord, Landlord.Account_Name, Preferences_Submitted_On, Insurance_24h_Phone, Property_Name, SG_Next_Available, SG_Availability, SG_Availability_Updated from RM_Properties where id is not null"); S.props.forEach(p => { if (p.Landlord && p["Landlord.Account_Name"]) p.Landlord.name = p["Landlord.Account_Name"]; }); } catch(e) { S.props = []; }
+    try { S.props = await coqlAll("select Name, Listing_ID, Rentable_Unit_IDs, Landlord, Landlord.Account_Name, Preferences_Submitted_On, Insurance_24h_Phone, Property_Name, SG_Next_Available, SG_Availability, SG_Availability_Updated, Inventory_Upload_Link, Inventory_Received_On, Inventory_Files from RM_Properties where id is not null"); S.props.forEach(p => { if (p.Landlord && p["Landlord.Account_Name"]) p.Landlord.name = p["Landlord.Account_Name"]; }); } catch(e) { S.props = []; }
     // COQL returns lookups as {id} only: copy the names selected with dot notation into them
     for (const t of ten) {
       if (t.Landlord) t.Landlord.name = t["Landlord.Account_Name"] || "";
@@ -700,6 +700,8 @@ function gapsOf(t){
   if (!t.Contract_Type) out.push({ lvl:2, txt:"Contract type missing: the right contract template cannot be chosen", fix:"Fill in Contract Type" });
   if (t.Contract_Type === "Temporary housing" && !t.Cause_Document_Received && t.Stage !== "Moved out") out.push({ lvl:2, txt:"Temporary contract without the cause document (legal risk)", fix:"Get the document and tick Cause Document Received" });
   if (!p) out.push({ lvl:2, txt:"No RM Property: rules, keys and insurance are unknown", fix:"Link the tenancy to its RM Property" });
+  else if (!p.Inventory_Received_On && ["Confirmed","Contract sent","Contract signed","Ready for move-in"].includes(t.Stage) && days(t.Move_in_Date) !== null && days(t.Move_in_Date) <= 30)
+    out.push({ lvl:2, txt:"No inventory received for the property and the move-in is on " + fmt(t.Move_in_Date) + ": the deposit is not protected", fix:"Send the landlord the inventory app and upload link from the property page", prop:p });
   else if (!p.Preferences_Submitted_On) out.push({ lvl:2, txt:"The landlord has not sent the property preferences", fix:"Send the form from the tenancy page" });
   else if (!p.Insurance_24h_Phone) out.push({ lvl:3, txt:"No insurance 24 h phone for emergencies", fix:"Ask the landlord and fill it in on the RM Property", prop:p });
   if (!t.Tenant_Profile) out.push({ lvl:3, txt:"No tenant linked: name and history are missing", fix:"Fill in Tenant Profile" });
@@ -929,7 +931,7 @@ function renderProperties(){
     const units = parseAvail(p.SG_Availability);
     const unitsTxt = String(p.Rentable_Unit_IDs || p.Listing_ID || "").replace(/[;,]\s*/g, " · ");
     return `<article class="pcard">
-      <div class="pinfo"><p class="pn">${esc(p.Property_Name || p.Name)}</p><p class="minor">${esc(p.Name)} · ${esc(llName(p))}${unitsTxt ? " · unit " + esc(unitsTxt) : ""}</p></div>
+      <div class="pinfo"><p class="pn">${esc(p.Property_Name || p.Name)}</p><p class="minor">${esc(p.Name)} · ${esc(llName(p))}${unitsTxt ? " · unit " + esc(unitsTxt) : ""} · ${p.Inventory_Received_On ? "inventory received " + fmt(String(p.Inventory_Received_On).slice(0,10)) : '<span style="color:var(--alert)">no inventory yet</span>'}</p></div>
       <div class="pnext">${s.k === 1 ? `<p class="pd">${fmt(p.SG_Next_Available)}</p><p class="${n <= 30 ? "soon" : "minor"}">${when(n)}</p>` : `<span class="pill p-fin">${esc(s.label)}</span>`}</div>
       <div class="pact"><a class="linkbtn" href="${recUrl("CustomModule92", p.id)}" target="_blank" rel="noopener">Open</a></div>
       ${units.length ? `<div class="ptl">${units.map(u => `<div class="urow"><span class="ulab">${units.length > 1 ? "Unit " + esc(u.id) : ""}${u.min ? `<span class="minor">${units.length > 1 ? " · " : ""}min. stay ${u.min} d</span>` : ""}</span>${u.error ? `<span class="pill p-bad">${esc(u.error)}</span>` : bar(u)}</div>`).join("")}${axis}<p class="pfoot">${fresh(p.SG_Availability_Updated)}</p></div>` : ""}
@@ -1094,8 +1096,8 @@ function propertyPanel(p){
   const v = x => (x === null || x === undefined || x === "") ? "—" : x;
   const row = (l, x) => `<div><dt>${esc(l)}</dt><dd>${x}</dd></div>`;
   const sent = p.Preferences_Submitted_On;
-  return `<section class="panel" aria-labelledby="h-prop"><div class="top" style="align-items:flex-start"><div><h2 id="h-prop">Property · ${esc(p.Property_Name || p.Name)}</h2><p class="sub" style="margin-bottom:0">${sent ? "Preferences sent by the landlord on " + fmt(String(sent).slice(0,10)) : "The landlord has not sent the preferences yet"}</p></div>
-    <div class="actions"><a class="btn" href="${recUrl("CustomModule92", p.id)}" target="_blank" rel="noopener">Open RM Property</a>${p.Preferences_PDF_Link ? `<a class="btn" href="${esc(p.Preferences_PDF_Link)}" target="_blank" rel="noopener">Preferences PDF</a>` : ""}${p.Property_Folder_Link ? `<a class="btn" href="${esc(p.Property_Folder_Link)}" target="_blank" rel="noopener">Property folder</a>` : ""}</div></div>
+  return `<section class="panel" aria-labelledby="h-prop"><div class="top" style="align-items:flex-start"><div><h2 id="h-prop">Property · ${esc(p.Property_Name || p.Name)}</h2><p class="sub" style="margin-bottom:0">${sent ? "Preferences sent by the landlord on " + fmt(String(sent).slice(0,10)) : "The landlord has not sent the preferences yet"} · ${p.Inventory_Received_On ? "Inventory received on " + fmt(String(p.Inventory_Received_On).slice(0,10)) + " (" + (p.Inventory_Files || 0) + " file(s))" : '<span style="color:var(--alert)">No inventory received yet</span>'}</p></div>
+    <div class="actions">${p.Inventory_Upload_Link ? `<button class="btn" type="button" data-copy="${esc(p.Inventory_Upload_Link)}">Copy inventory upload link</button>` : ""}<a class="btn" href="${recUrl("CustomModule92", p.id)}" target="_blank" rel="noopener">Open RM Property</a>${p.Preferences_PDF_Link ? `<a class="btn" href="${esc(p.Preferences_PDF_Link)}" target="_blank" rel="noopener">Preferences PDF</a>` : ""}${p.Property_Folder_Link ? `<a class="btn" href="${esc(p.Property_Folder_Link)}" target="_blank" rel="noopener">Property folder</a>` : ""}</div></div>
     <div class="pgrid">
       <dl><h3>Keys and access</h3>${row("Key handover", esc(v(p.Key_Handover)))}${row("Check-in hours", esc(v(p.Check_in_Hours)))}${row("Contact preference", esc(v(p.Contact_Preference)))}${row("Emergency contact", esc(v(p.Emergency_Contact_Name)) + (p.Emergency_Contact_Phone ? ` · <a href="tel:${esc(p.Emergency_Contact_Phone)}">${esc(p.Emergency_Contact_Phone)}</a>` : ""))}</dl>
       <dl><h3>Repairs and insurance</h3>${row("Insurance 24 h", p.Insurance_24h_Phone ? `<a href="tel:${esc(p.Insurance_24h_Phone)}"><b>${esc(p.Insurance_24h_Phone)}</b></a>` : "—")}${row("Insurer and policy", esc(v(p.Insurer_and_Policy || p.Home_Insurance)))}${row("Repairs by", esc(v(p.Repairs_By)))}${row("Authorisation", esc(v(p.Repairs_Authorisation)))}${row("Limit per repair", p.Repair_Limit != null ? eur(p.Repair_Limit) : "—")}${row("Monthly limit", p.Monthly_Repair_Limit != null ? eur(p.Monthly_Repair_Limit) : "—")}</dl>
