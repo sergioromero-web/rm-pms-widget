@@ -437,7 +437,9 @@ async function load(){
       coqlAll("select " + TEN_FIELDS + " from RM_Tenancies where id is not null order by Move_in_Date asc"),
       coqlAll("select " + FEE_FIELDS + " from RM_Fee_Lines where id is not null order by Service_Month asc")
     ]);
-    try { S.props = await coqlAll("select Name, Listing_ID, Rentable_Unit_IDs, Landlord, Landlord.Account_Name, Preferences_Submitted_On, Insurance_24h_Phone, Property_Name, SG_Next_Available, SG_Availability, SG_Availability_Updated, Inventory_Upload_Link, Inventory_Received_On, Inventory_Files from RM_Properties where id is not null"); S.props.forEach(p => { if (p.Landlord && p["Landlord.Account_Name"]) p.Landlord.name = p["Landlord.Account_Name"]; }); } catch(e) { S.props = []; }
+    try { S.props = await coqlAll("select Name, Listing_ID, Rentable_Unit_IDs, Landlord, Landlord.Account_Name, Preferences_Submitted_On, Insurance_24h_Phone, Property_Name, SG_Next_Available, SG_Availability, SG_Availability_Updated, Inventory_Upload_Link, Inventory_Received_On, Inventory_Files, Listing, Listing.Listing_Published from RM_Properties where id is not null"); S.props.forEach(p => { if (p.Landlord && p["Landlord.Account_Name"]) p.Landlord.name = p["Landlord.Account_Name"]; });
+      // Only properties we really manage: linked to a landlord and with the listing published in Stargate (archived or unpublished listings are hidden)
+      S.props = S.props.filter(p => p.Landlord && p.Listing && p["Listing.Listing_Published"] === true); } catch(e) { S.props = []; }
     // COQL returns lookups as {id} only: copy the names selected with dot notation into them
     for (const t of ten) {
       if (t.Landlord) t.Landlord.name = t["Landlord.Account_Name"] || "";
@@ -458,6 +460,12 @@ async function load(){
     // Landlord details (VAT number and phone) for data quality and the Landlords tab
     const lIds = [...new Set(ten.map(t => t.Landlord && t.Landlord.id).filter(Boolean))];
     const accs = {};
+    // Every Rental Management landlord (manual flag or RM plan from Stargate), with or without tenancies
+    let rmAccs = [];
+    try { rmAccs = await coqlAll("select Account_Name, CIF, Phone, Email, RM_Folder_Map, RM_Folder_Link, Last_Statement_Date, Subscription_type, Rental_Management from Accounts where (Rental_Management = true or Subscription_type = 'rentalManagement')"); } catch(e) { rmAccs = []; }
+    rmAccs.forEach(a => { accs[a.id] = a; });
+    S.rmLandlords = rmAccs.map(a => ({ id: a.id, name: a.Account_Name || "" }));
+    for (const lid of [...lIds]) { if (accs[lid]) lIds.splice(lIds.indexOf(lid), 1); }
     for (let i = 0; i < lIds.length; i += 40) {
       const ids = lIds.slice(i, i + 40).map(x => "'" + x + "'").join(",");
       (await coql("select Account_Name, CIF, Phone, Email, RM_Folder_Map, Last_Statement_Date from Accounts where id in (" + ids + ") limit 200")).data.forEach(a => accs[a.id] = a);
@@ -727,6 +735,7 @@ function dataQuality(ten){
 function renderLandlords(){
   const ten = visibleTenancies(), all = todayItems();
   const groups = {};
+  (S.rmLandlords || []).forEach(l => { if (!($("#showTest") && $("#showTest").checked) && /test/i.test(l.name)) return; groups[l.id] = { id:l.id, name:l.name, list:[] }; });
   ten.forEach(t => { if (!t.Landlord) return; (groups[t.Landlord.id] = groups[t.Landlord.id] || { id:t.Landlord.id, name:nameOf(t.Landlord), list:[] }).list.push(t); });
   const cards = Object.values(groups).sort((a,b) => a.name.localeCompare(b.name));
   const next = iso(monthStart(1));
@@ -737,10 +746,14 @@ function renderLandlords(){
     const bk = new Set(g.list.map(t => t.Booking && t.Booking.id).filter(Boolean)), tIso = iso(today());
     const nextPay = S.allInst.filter(i => i.Installment_Type === "payout" && i.Booking && bk.has(i.Booking.id) && !["paid","overpaid"].includes(i.Installment_Status) && Number(i.Expected_Amount) > 0 && i.Installment_Due_Date >= tIso).map(i => i.Installment_Due_Date).sort()[0];
     const feeNext = sum(S.fees.filter(f => f.Landlord && f.Landlord.id === g.id && f.Service_Month === next && f.Status !== "Cancelled"), f => f.Fee_Amount);
-    return `<article class="lcard"><div><h3>${esc(g.name)}</h3><p class="minor" style="margin:4px 0 0">${a.Phone ? `<a href="tel:${esc(a.Phone)}">${esc(a.Phone)}</a>` : "No phone"} · ${a.CIF ? "VAT " + esc(a.CIF) : `<span style="color:var(--bad)">No VAT number</span>`}</p></div>
+    const lp = (S.props || []).filter(p => p.Landlord && p.Landlord.id === g.id);
+    const prefOk = lp.filter(p => p.Preferences_Submitted_On).length, invOk = lp.filter(p => p.Inventory_Received_On).length;
+    const fl = a.RM_Folder_Link;
+    const onb = `<p class="minor" style="margin:6px 0 0">Onboarding · ${lp.length ? lp.length + " propert" + (lp.length === 1 ? "y" : "ies") : `<span style="color:var(--bad)">no published listings</span>`} · preferences ${prefOk}/${lp.length} · inventory ${invOk}/${lp.length}${fl ? ` · <a href="${esc(fl)}" target="_blank" rel="noopener">Folder</a>` : ` · <span style="color:var(--bad)">no folder yet</span>`}</p>`;
+    return `<article class="lcard"><div><h3>${esc(g.name)}</h3><p class="minor" style="margin:4px 0 0">${a.Phone ? `<a href="tel:${esc(a.Phone)}">${esc(a.Phone)}</a>` : "No phone"} · ${a.CIF ? "VAT " + esc(a.CIF) : `<span style="color:var(--bad)">No VAT number</span>`}</p>${onb}</div>
       <div class="lgrid"><div><p class="l" style="margin:0">Active tenancies</p><p class="v" style="margin:2px 0 0">${act.length} <span class="minor">of ${g.list.length}</span></p></div><div><p class="l" style="margin:0">Monthly rent</p><p class="v" style="margin:2px 0 0">${eur(sum(act, t => t.Monthly_Rent))}</p></div><div><p class="l" style="margin:0">Next payout</p><p class="v" style="margin:2px 0 0">${fmt(nextPay)}</p></div><div><p class="l" style="margin:0">Fee next month</p><p class="v" style="margin:2px 0 0">${eur(feeNext)}</p></div></div>
       <div class="actions" style="justify-content:space-between"><span class="pill ${pending ? "p-week" : "p-ok"}">${pending ? pending + " pending action(s)" : "All clear"}</span><span><button class="linkbtn" type="button" data-landlord="${esc(g.name)}">See tenancies</button> <a class="linkbtn" href="${recUrl("Accounts",g.id)}" target="_blank" rel="noopener">Open in CRM</a></span></div>
-    </article>`; }).join("")}</div>` : `<section class="panel"><p class="empty">No landlords with tenancies yet.</p></section>`}`;
+    </article>`; }).join("")}</div>` : `<section class="panel"><p class="empty">No Rental Management landlords yet.</p></section>`}`;
   bindAll();
 }
 
